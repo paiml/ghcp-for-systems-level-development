@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  validate:
+    name: Validate Repository
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Validate repository structure
+      run: |
+        test -f README.md || (echo "ERROR: README.md not found" && exit 1)
+        test -f CLAUDE.md || (echo "ERROR: CLAUDE.md not found" && exit 1)
+        test -f LICENSE || (echo "ERROR: LICENSE not found" && exit 1)
+        test -d labs/module1 || (echo "ERROR: labs/module1 not found" && exit 1)
+        test -d labs/module2 || (echo "ERROR: labs/module2 not found" && exit 1)
+        test -d labs/module3 || (echo "ERROR: labs/module3 not found" && exit 1)
+        test -d labs/bonus || (echo "ERROR: labs/bonus not found" && exit 1)
+        test -d examples/bashrs-cleanup || (echo "ERROR: examples/bashrs-cleanup not found" && exit 1)
+        echo "✅ Repository structure is valid!"
+
+  test:
+    name: Test Examples
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build examples
+      run: make example-build
+
+    - name: Run example tests
+      run: make example-test
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v4
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'

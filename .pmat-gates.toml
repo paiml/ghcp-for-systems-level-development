@@ -1,0 +1,22 @@
+# PMAT Quality Gates Configuration
+
+[quality-gates]
+min_repo_score = 85
+fail_on_broken_links = true
+require_readme = true
+require_license = true
+require_ci = true
+
+[documentation]
+require_contributing = false
+require_changelog = false
+min_coverage_docs = 70
+
+[testing]
+min_test_coverage = 70
+require_unit_tests = true
+require_integration_tests = false
+
+[style]
+require_editorconfig = false
+require_pre_commit = true
